@@ -15,20 +15,12 @@ class BoardGame extends StatefulWidget {
 
 class _BoardGameState extends State<BoardGame> {
   late List<List<ChessPiece?>> board;
-  // The currently selected piece on the chess board,
-// If no piece is selected, this is null.
   ChessPiece? selectedPiece;
-// The row index of the selected piece
-// Default value -1 indicated no piece is currently selected;
   int selectedRow = -1;
-
-// The Column index of the selected piece
-// Default value -1 indicated no piece is currently selected;
   int selectedCol = -1;
   List<List<int>> validMoves = [];
 
   List<ChessPiece> whitePiecesTaken = [];
-
   List<ChessPiece> blackPiecesTaken = [];
 
   bool isWhiteTurn = true;
@@ -37,6 +29,10 @@ class _BoardGameState extends State<BoardGame> {
   List<int> blackKingPosition = [0, 4];
   bool checkStatus = false;
 
+  // Chat-related variables
+  final List<String> messages = [];
+  final TextEditingController chatController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -44,11 +40,9 @@ class _BoardGameState extends State<BoardGame> {
   }
 
   void _initializeBoard() {
-    // initialize the board with nulls, meaning no pieces in those positions.
     List<List<ChessPiece?>> newBoard =
         List.generate(8, (index) => List.generate(8, (index) => null));
 
-    // Place pawns
     for (int i = 0; i < 8; i++) {
       newBoard[1][i] = ChessPiece(
         type: ChessPiecesType.pawn,
@@ -63,7 +57,6 @@ class _BoardGameState extends State<BoardGame> {
       );
     }
 
-    // Place rooks
     newBoard[0][0] = ChessPiece(
         type: ChessPiecesType.rook,
         isWhite: false,
@@ -81,7 +74,6 @@ class _BoardGameState extends State<BoardGame> {
         isWhite: true,
         imagePath: "images/rook.png");
 
-    // Place knights
     newBoard[0][1] = ChessPiece(
         type: ChessPiecesType.knight,
         isWhite: false,
@@ -99,12 +91,10 @@ class _BoardGameState extends State<BoardGame> {
         isWhite: true,
         imagePath: "images/knight.png");
 
-    // Place bishops
     newBoard[0][2] = ChessPiece(
         type: ChessPiecesType.bishop,
         isWhite: false,
         imagePath: "images/bishop.png");
-
     newBoard[0][5] = ChessPiece(
         type: ChessPiecesType.bishop,
         isWhite: false,
@@ -118,7 +108,6 @@ class _BoardGameState extends State<BoardGame> {
         isWhite: true,
         imagePath: "images/bishop.png");
 
-    // Place queens
     newBoard[0][3] = ChessPiece(
       type: ChessPiecesType.queen,
       isWhite: false,
@@ -130,7 +119,6 @@ class _BoardGameState extends State<BoardGame> {
       imagePath: 'images/queen.png',
     );
 
-    // Place kings
     newBoard[0][4] = ChessPiece(
       type: ChessPiecesType.king,
       isWhite: false,
@@ -145,7 +133,6 @@ class _BoardGameState extends State<BoardGame> {
     board = newBoard;
   }
 
-// USER SELECTED A PIECE
   void pieceSelected(int row, int col) {
     setState(() {
       if (selectedPiece == null && board[row][col] != null) {
@@ -180,14 +167,11 @@ class _BoardGameState extends State<BoardGame> {
 
     switch (piece.type) {
       case ChessPiecesType.pawn:
-      case ChessPiecesType.pawn:
-        // Check the square immediately in front of the pawn
         if (isInBoard(row + direction, col) &&
             board[row + direction][col] == null) {
           candidateMoves.add([row + direction, col]);
         }
 
-        // If it's the pawn's first move (row is either 1 for black pawns or 6 for white ones), check the square two steps ahead
         if ((row == 1 && !piece.isWhite) || (row == 6 && piece.isWhite)) {
           if (isInBoard(row + 2 * direction, col) &&
               board[row + 2 * direction][col] == null &&
@@ -196,7 +180,6 @@ class _BoardGameState extends State<BoardGame> {
           }
         }
 
-        // Check for possible captures
         if (isInBoard(row + direction, col - 1) &&
             board[row + direction][col - 1] != null &&
             board[row + direction][col - 1]!.isWhite != piece.isWhite) {
@@ -210,12 +193,11 @@ class _BoardGameState extends State<BoardGame> {
         break;
 
       case ChessPiecesType.rook:
-        // horizontal and vertical directions
         var directions = [
-          [-1, 0], // up
-          [1, 0], // down
-          [0, -1], //left
-          [0, 1], //right
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
         ];
         for (var direction in directions) {
           var i = 1;
@@ -227,28 +209,26 @@ class _BoardGameState extends State<BoardGame> {
             }
             if (board[newRow][newCol] != null) {
               if (board[newRow][newCol]!.isWhite != piece.isWhite) {
-                candidateMoves
-                    .add([newRow, newCol]); // can capture opponent's piece
+                candidateMoves.add([newRow, newCol]);
               }
-              break; // blocked by own piece or after capturing
+              break;
             }
-            candidateMoves.add([newRow, newCol]); // an empty valid square
+            candidateMoves.add([newRow, newCol]);
             i++;
           }
         }
         break;
 
       case ChessPiecesType.knight:
-        // all eight possible L shapes the knight can move
         var knightMoves = [
-          [-2, -1], // up 2 left 1
-          [-2, 1], // up 2 right 1
-          [-1, -2], // up 1 left 2
-          [-1, 2], // up 1 right 2
-          [1, -2], // down 1 left 2
-          [1, 2], // down 1 right 2
-          [2, -1], // down 2 left 1
-          [2, 1], // down 2 right 1
+          [-2, -1],
+          [-2, 1],
+          [-1, -2],
+          [-1, 2],
+          [1, -2],
+          [1, 2],
+          [2, -1],
+          [2, 1],
         ];
         for (var move in knightMoves) {
           var newRow = row + move[0];
@@ -256,7 +236,6 @@ class _BoardGameState extends State<BoardGame> {
           if (!isInBoard(newRow, newCol)) {
             continue;
           }
-          // if the new position is empty or there is an opponent's piece there
           if (board[newRow][newCol] == null ||
               board[newRow][newCol]!.isWhite != piece.isWhite) {
             candidateMoves.add([newRow, newCol]);
@@ -265,12 +244,11 @@ class _BoardGameState extends State<BoardGame> {
         break;
 
       case ChessPiecesType.bishop:
-        // diagonal directions
         var directions = [
-          [-1, -1], // up-left
-          [-1, 1], // up-right
-          [1, -1], // down-left
-          [1, 1], // down-right
+          [-1, -1],
+          [-1, 1],
+          [1, -1],
+          [1, 1],
         ];
         for (var direction in directions) {
           var i = 1;
@@ -282,9 +260,9 @@ class _BoardGameState extends State<BoardGame> {
             }
             if (board[newRow][newCol] != null) {
               if (board[newRow][newCol]!.isWhite != piece.isWhite) {
-                candidateMoves.add([newRow, newCol]); // capture
+                candidateMoves.add([newRow, newCol]);
               }
-              break; // blocked
+              break;
             }
             candidateMoves.add([newRow, newCol]);
             i++;
@@ -293,16 +271,15 @@ class _BoardGameState extends State<BoardGame> {
         break;
 
       case ChessPiecesType.queen:
-        // Queen can move in any direction, combining the moves of a rook and a bishop
         var directions = [
-          [-1, 0], // up
-          [1, 0], // down
-          [0, -1], // left
-          [0, 1], // right
-          [-1, -1], // up-left
-          [-1, 1], // up-right
-          [1, -1], // down-left
-          [1, 1] // down-right
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
+          [-1, -1],
+          [-1, 1],
+          [1, -1],
+          [1, 1]
         ];
 
         for (var direction in directions) {
@@ -317,11 +294,11 @@ class _BoardGameState extends State<BoardGame> {
 
             if (board[newRow][newCol] != null) {
               if (board[newRow][newCol]!.isWhite != piece.isWhite) {
-                candidateMoves.add([newRow, newCol]); // capture
+                candidateMoves.add([newRow, newCol]);
               }
-              break; // blocked
+              break;
             }
-            candidateMoves.add([newRow, newCol]); // free space
+            candidateMoves.add([newRow, newCol]);
             i++;
           }
         }
@@ -329,14 +306,14 @@ class _BoardGameState extends State<BoardGame> {
 
       case ChessPiecesType.king:
         var kingMoves = [
-          [-1, -1], // Up-left
-          [-1, 0], // Up
-          [-1, 1], // Up-right
-          [0, -1], // Left
-          [0, 1], // Right
-          [1, -1], // Down-left
-          [1, 0], // Down
-          [1, 1] // Down-right
+          [-1, -1],
+          [-1, 0],
+          [-1, 1],
+          [0, -1],
+          [0, 1],
+          [1, -1],
+          [1, 0],
+          [1, 1]
         ];
 
         for (var move in kingMoves) {
@@ -349,9 +326,9 @@ class _BoardGameState extends State<BoardGame> {
 
           if (board[newRow][newCol] != null) {
             if (board[newRow][newCol]!.isWhite != piece.isWhite) {
-              candidateMoves.add([newRow, newCol]); // Can capture
+              candidateMoves.add([newRow, newCol]);
             }
-            continue; // Square is blocked by a piece of the same color
+            continue;
           }
           candidateMoves.add([newRow, newCol]);
         }
@@ -378,57 +355,6 @@ class _BoardGameState extends State<BoardGame> {
       realValidMoves = candidateMoves;
     }
     return realValidMoves;
-  }
-
-  void movePiece(int newRow, int newCol) {
-// if the new spot has an enemy piece
-    if (board[newRow][newCol] != null) {
-// add the captured piece to the appropriate list
-      var capturedPiece = board[newRow][newCol];
-      if (capturedPiece!.isWhite) {
-        whitePiecesTaken.add(capturedPiece);
-      } else {
-        blackPiecesTaken.add(capturedPiece);
-      }
-    }
-
-    if (selectedPiece?.type == ChessPiecesType.king) {
-      if (selectedPiece!.isWhite) {
-        whiteKingPosition = [newRow, newCol];
-      } else {
-        blackKingPosition = [newRow, newCol];
-      }
-    }
-
-    board[newRow][newCol] = selectedPiece;
-    board[selectedRow][selectedCol] = null;
-
-    if (isKingInCheck(!isWhiteTurn)) {
-      checkStatus = true;
-    } else {
-      checkStatus = false;
-    }
-
-    setState(() {
-      selectedPiece = null;
-      selectedRow = -1;
-      selectedCol = -1;
-      validMoves = [];
-    });
-
-    if (isCheckMate(!isWhiteTurn)) {
-      showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-                title: Text("CHECK MATE"),
-                actions: [
-                  TextButton(
-                      onPressed: resetGame, child: Text("Restart The Game"))
-                ],
-              ));
-    }
-
-    isWhiteTurn = !isWhiteTurn;
   }
 
   bool isKingInCheck(bool isWhiteKing) {
@@ -506,6 +432,55 @@ class _BoardGameState extends State<BoardGame> {
     return true;
   }
 
+  void movePiece(int newRow, int newCol) {
+    if (board[newRow][newCol] != null) {
+      var capturedPiece = board[newRow][newCol];
+      if (capturedPiece!.isWhite) {
+        whitePiecesTaken.add(capturedPiece);
+      } else {
+        blackPiecesTaken.add(capturedPiece);
+      }
+    }
+
+    if (selectedPiece?.type == ChessPiecesType.king) {
+      if (selectedPiece!.isWhite) {
+        whiteKingPosition = [newRow, newCol];
+      } else {
+        blackKingPosition = [newRow, newCol];
+      }
+    }
+
+    board[newRow][newCol] = selectedPiece;
+    board[selectedRow][selectedCol] = null;
+
+    if (isKingInCheck(!isWhiteTurn)) {
+      checkStatus = true;
+    } else {
+      checkStatus = false;
+    }
+
+    setState(() {
+      selectedPiece = null;
+      selectedRow = -1;
+      selectedCol = -1;
+      validMoves = [];
+    });
+
+    if (isCheckMate(!isWhiteTurn)) {
+      showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: Text("CHECK MATE"),
+                actions: [
+                  TextButton(
+                      onPressed: resetGame, child: Text("Restart The Game"))
+                ],
+              ));
+    }
+
+    isWhiteTurn = !isWhiteTurn;
+  }
+
   void resetGame() {
     Navigator.pop(context);
     _initializeBoard();
@@ -518,70 +493,162 @@ class _BoardGameState extends State<BoardGame> {
     setState(() {});
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white30,
-      body: Column(
-        children: [
-          Expanded(
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: whitePiecesTaken.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 8),
-              itemBuilder: (context, index) => DeadPiece(
-                imagePath: whitePiecesTaken[index].imagePath,
-                isWhite: true,
-              ),
-            ), // GridView.builder
-          ), // Expanded
-          Text(checkStatus ? "CHECK" : ""),
-          Expanded(
-            flex: 3,
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 8 * 8,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 8),
-              itemBuilder: (context, index) {
-                int row = index ~/ 8;
-                int col = index % 8;
+  void sendMessage() {
+    if (chatController.text.isNotEmpty) {
+      setState(() {
+        messages.add(chatController.text);
+        chatController.clear();
+      });
+    }
+  }
 
-                bool isSelected = selectedCol == col && selectedRow == row;
-                bool isValidMove = false;
-                for (var position in validMoves) {
-                  // compare row and col
-                  if (position[0] == row && position[1] == col) {
-                    isValidMove = true;
-                  }
-                }
-
-                return Square(
-                  isValidMove: isValidMove,
-                  onTap: () => pieceSelected(row, col),
-                  isSelected: isSelected,
-                  isWhite: isWhite(index),
-                  piece: board[row][col],
-                );
-              },
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.white,
+    body: Column(
+      children: [
+        // White Pieces Taken Display
+        SizedBox(
+          height: 50,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: whitePiecesTaken.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 8),
+            itemBuilder: (context, index) => DeadPiece(
+              imagePath: whitePiecesTaken[index].imagePath,
+              isWhite: true,
             ),
           ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            checkStatus ? "CHECK" : "",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.redAccent,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 8 * 8,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 8),
+            itemBuilder: (context, index) {
+              int row = index ~/ 8;
+              int col = index % 8;
 
-          Expanded(
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: blackPiecesTaken.length,
-              gridDelegate:
-                  SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 8),
-              itemBuilder: (context, index) => DeadPiece(
-                imagePath: blackPiecesTaken[index].imagePath,
-                isWhite: false,
+              bool isSelected = selectedCol == col && selectedRow == row;
+              bool isValidMove = validMoves.any(
+                  (position) => position[0] == row && position[1] == col);
+
+              return Square(
+                isValidMove: isValidMove,
+                onTap: () => pieceSelected(row, col),
+                isSelected: isSelected,
+                isWhite: isWhite(index),
+                piece: board[row][col],
+              );
+            },
+          ),
+        ),
+        // Black Pieces Taken Display
+        SizedBox(
+          height: 50,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: blackPiecesTaken.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 8),
+            itemBuilder: (context, index) => DeadPiece(
+              imagePath: blackPiecesTaken[index].imagePath,
+              isWhite: false,
+            ),
+          ),
+        ),
+        // Chat window at the bottom
+        Center(
+          child: SizedBox(
+            width: 350, // Adjust the width as needed
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(0, -2),
+                  ),
+                ],
+                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
               ),
-            ), // GridView.builder
-          ), // Expanded
-        ],
-      ),
-    );
-  }
+              constraints: BoxConstraints(
+                maxHeight: 225,
+              ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(8.0),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              messages[index],
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0, vertical: 8.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: chatController,
+                            decoration: InputDecoration(
+                              hintText: "Enter your message",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.send),
+                          onPressed: sendMessage,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Space between chat input and the bottom of the screen
+        SizedBox(height: 36),
+      ],
+    ),
+  );
+}
+
+
 }

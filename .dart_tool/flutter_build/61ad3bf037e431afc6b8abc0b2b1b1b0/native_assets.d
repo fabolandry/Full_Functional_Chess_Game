@@ -1,0 +1,1 @@
+ /Users/fritz/Documents/Full_Functional_Chess_Game/.dart_tool/flutter_build/61ad3bf037e431afc6b8abc0b2b1b1b0/native_assets.yaml: 
